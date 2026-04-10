@@ -3,222 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Scanner - QR & Barcode</title>
+    <title>Master Scanner v2 - Auto Reset & Geo Tracking</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --bg: #f1f5f9;
-            --card: #ffffff;
-            --text: #1e293b;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 600px; }
-
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: var(--primary); margin: 0; font-size: 28px; }
-        .header p { color: #64748b; margin: 5px 0; }
-
-        .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-        }
-
-        /* Area Kamera */
-        #reader {
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #e2e8f0 !important;
-        }
-
-        /* Controls */
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .btn-copy { background: var(--success); color: white; }
-        .btn-download { background: var(--primary); color: white; }
-        .btn-google { background: var(--danger); color: white; }
-
-        .btn:hover { opacity: 0.9; }
-
-        /* Hasil Data */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 14px;
-        }
-
-        .label { font-weight: bold; color: #64748b; width: 35%; }
-        .val { word-break: break-all; color: var(--text); }
-
-        #res-name {
-            background: #dbeafe;
-            color: #1e40af;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        input[type="file"] { margin-top: 10px; width: 100%; }
+        .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; }
+        .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .status-wait { background: #e2e8f0; color: #64748b; }
+        .status-active { background: #dcfce7; color: #166534; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: top; }
+        .label { font-weight: bold; color: #64748b; width: 40%; }
+        .btn-map { background: #ea4335; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; display: none; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>Master Scanner</h1>
-        <p>Solusi Pemindaian Barcode & QR Modern</p>
+    <div class="card" style="text-align: center;">
+        <h1 style="color: var(--primary); margin: 0;">Master Scanner</h1>
+        <p style="color: #64748b;">Auto-Reset 3 Detik & Geo-Tracker</p>
     </div>
 
     <div class="card">
-        <h3>Layar Pemindai</h3>
+        <div id="status-display" class="status-badge status-wait">SIAP MENERIMA SCAN</div>
         <div id="reader"></div>
-        
-        <div class="controls">
-            <label><strong>Scan dari File Foto:</strong></label>
-            <input type="file" id="file-input" accept="image/*">
-        </div>
+        <input type="file" id="file-input" accept="image/*" style="margin-top: 15px; width: 100%;">
     </div>
 
     <div class="card">
-        <h3>Hasil Data Terdeteksi</h3>
+        <h3>Data Informasi</h3>
         <table>
             <tr>
-                <td class="label">Tipe Barcode</td>
-                <td class="val"><span id="res-name">-</span></td>
+                <td class="label">Konten</td>
+                <td id="res-info">-</td>
             </tr>
             <tr>
-                <td class="label">Konten Data</td>
-                <td id="res-info" class="val">-</td>
-            </tr>
-            <tr>
-                <td class="label">Alamat Web</td>
-                <td class="val">
-                    <div id="web-section">Menunggu scan...</div>
+                <td class="label">Estimasi Lokasi Web</td>
+                <td>
+                    <div id="res-geo">Tidak ada link terdeteksi</div>
+                    <a id="btn-google-maps" href="#" target="_blank" class="btn-map">📍 Lihat di Google Maps</a>
                 </td>
             </tr>
+            <tr>
+                <td class="label">Reset Dalam</td>
+                <td id="res-timer">-</td>
+            </tr>
         </table>
-
-        <div class="controls" id="action-buttons" style="display: none; margin-top: 20px;">
-            <button class="btn btn-copy" onclick="copyToClipboard()">
-                📋 Salin Semua Data
-            </button>
-            <button class="btn btn-download" onclick="downloadResult()">
-                💾 Download Hasil (.txt)
-            </button>
-        </div>
     </div>
 </div>
 
 <script>
-    const resName = document.getElementById('res-name');
     const resInfo = document.getElementById('res-info');
-    const webSection = document.getElementById('web-section');
-    const actionButtons = document.getElementById('action-buttons');
+    const resGeo = document.getElementById('res-geo');
+    const resTimer = document.getElementById('res-timer');
+    const statusDisplay = document.getElementById('status-display');
+    const btnMaps = document.getElementById('btn-google-maps');
 
-    // 1. Inisialisasi Scanner Kamera
-    const scanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 } 
-    });
-    
-    scanner.render(onScanSuccess);
+    let isScanning = true;
 
     function onScanSuccess(decodedText, decodedResult) {
-        if (navigator.vibrate) navigator.vibrate(100);
+        if (!isScanning) return;
+        
+        isScanning = false; // Kunci agar tidak scan berkali-kali saat proses reset
+        if (navigator.vibrate) navigator.vibrate(150);
 
-        // Tampilkan Tombol Aksi
-        actionButtons.style.display = "flex";
-
-        // Tipe dan Isi
-        const format = decodedResult.result.format.formatName;
-        resName.innerText = format;
+        statusDisplay.innerText = "DATA DITERIMA!";
+        statusDisplay.className = "status-badge status-active";
         resInfo.innerText = decodedText;
 
-        // Logika Link Web / Google Search
-        const urlPattern = /(https?:\/\/[^\s]+)/g;
+        // FITUR PELACAKAN KOORDINAT (BERDASARKAN LINK)
+        const urlPattern = /(https?:\/\/[^\s\/]+)/g;
         const foundUrl = decodedText.match(urlPattern);
 
         if (foundUrl) {
-            webSection.innerHTML = `<a href="${foundUrl[0]}" target="_blank" class="btn btn-download" style="background:#007bff">Buka Website Resmi</a>`;
+            const domain = new URL(foundUrl[0]).hostname;
+            resGeo.innerText = `Melacak Server: ${domain}...`;
+            
+            // Menggunakan API pihak ketiga untuk mencari lokasi server website
+            fetch(`https://ipapi.co/${domain}/json/`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.latitude && data.longitude) {
+                        resGeo.innerHTML = `<b>Server:</b> ${data.city}, ${data.country_name}<br><b>Koord:</b> ${data.latitude}, ${data.longitude}`;
+                        btnMaps.href = `https://www.google.com/maps?q=${data.latitude},${data.longitude}`;
+                        btnMaps.style.display = "inline-block";
+                    } else {
+                        resGeo.innerText = "Lokasi server tidak dapat diakses publik";
+                    }
+                })
+                .catch(() => resGeo.innerText = "Gagal melacak lokasi server.");
         } else {
-            const googleUrl = "https://www.google.com/search?q=" + encodeURIComponent(decodedText);
-            webSection.innerHTML = `<a href="${googleUrl}" target="_blank" class="btn btn-google">Cari di Google</a>`;
+            resGeo.innerText = "Bukan link website (Tidak ada koordinat server)";
+            btnMaps.style.display = "none";
         }
+
+        // FITUR RESET 3 DETIK
+        let timeLeft = 3;
+        resTimer.innerText = timeLeft + " detik";
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            resTimer.innerText = timeLeft + " detik";
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                resetData();
+            }
+        }, 1000);
     }
 
-    // 2. Inisialisasi Scan dari File Foto
+    function resetData() {
+        resInfo.innerText = "-";
+        resGeo.innerText = "Tidak ada link terdeteksi";
+        resTimer.innerText = "-";
+        btnMaps.style.display = "none";
+        statusDisplay.innerText = "SIAP MENERIMA SCAN";
+        statusDisplay.className = "status-badge status-wait";
+        isScanning = true;
+    }
+
+    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    scanner.render(onScanSuccess);
+
+    // Scan dari file
     const html5QrCode = new Html5Qrcode("reader");
     document.getElementById('file-input').addEventListener('change', e => {
         if (e.target.files.length == 0) return;
         html5QrCode.scanFile(e.target.files[0], true)
-            .then(decodedText => {
-                onScanSuccess(decodedText, { result: { format: { formatName: "IMAGE_FILE" } } });
-            })
-            .catch(err => alert("Gagal membaca: Barcode tidak jelas atau tidak ada."));
+            .then(decodedText => onScanSuccess(decodedText, { result: { format: { formatName: "FILE" } } }))
+            .catch(err => alert("Gagal scan file."));
     });
-
-    // FUNGSI SALIN DATA
-    function copyToClipboard() {
-        const textToCopy = `Tipe: ${resName.innerText}\nData: ${resInfo.innerText}`;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert("Data berhasil disalin!");
-        });
-    }
-
-    // FUNGSI DOWNLOAD HASIL
-    function downloadResult() {
-        const content = `HASIL SCAN MASTER SCANNER\n==========================\nFormat: ${resName.innerText}\nIsi Data: ${resInfo.innerText}\nTanggal: ${new Date().toLocaleString()}`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `scan-result-${Date.now()}.txt`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    }
 </script>
 
 </body>
