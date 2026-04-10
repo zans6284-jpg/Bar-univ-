@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Web scanner</title>
+    <title>Master Scanner - QR & Barcode</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
             --primary: #2563eb;
-            --bg: #f8fafc;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
             --card: #ffffff;
             --text: #1e293b;
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -24,222 +26,198 @@
             align-items: center;
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-        }
+        .container { width: 100%; max-width: 600px; }
+
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: var(--primary); margin: 0; font-size: 28px; }
+        .header p { color: #64748b; margin: 5px 0; }
 
         .card {
             background: var(--card);
             border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             margin-bottom: 20px;
         }
 
-        h2, h3 { margin-top: 0; color: #0f172a; }
-
-        /* Scanner Styling */
+        /* Area Kamera */
         #reader {
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
-            border: none !important;
+            border: 2px solid #e2e8f0 !important;
         }
 
-        #reader__dashboard_section_csr button {
-            background-color: var(--primary) !important;
-            color: white !important;
-            border: none !important;
-            padding: 10px 20px !important;
-            border-radius: 8px !important;
-            cursor: pointer;
-            margin: 5px;
+        /* Controls */
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        /* Upload Section */
-        .upload-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed #cbd5e1;
-        }
-
-        input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #e2e8f0;
+        .btn {
+            padding: 12px;
+            border: none;
             border-radius: 8px;
-            background: #f1f5f9;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
         }
 
-        /* Table Styling */
+        .btn-copy { background: var(--success); color: white; }
+        .btn-download { background: var(--primary); color: white; }
+        .btn-google { background: var(--danger); color: white; }
+
+        .btn:hover { opacity: 0.9; }
+
+        /* Hasil Data */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
-        th, td {
-            text-align: left;
-            padding: 14px;
+        td {
+            padding: 12px;
             border-bottom: 1px solid #f1f5f9;
             font-size: 14px;
         }
 
-        th { background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; }
-
-        .btn-copy {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        .btn-copy:hover { background: #059669; }
-
-        .link-active {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            word-break: break-all;
-        }
+        .label { font-weight: bold; color: #64748b; width: 35%; }
+        .val { word-break: break-all; color: var(--text); }
 
         #res-name {
-            display: inline-block;
-            padding: 4px 10px;
             background: #dbeafe;
             color: #1e40af;
-            border-radius: 6px;
-            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
             font-size: 12px;
+            font-weight: bold;
         }
+
+        input[type="file"] { margin-top: 10px; width: 100%; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <h2>Scanner QR & Barcode</h2>
-        <div id="reader"></div>
+    <div class="header">
+        <h1>Master Scanner</h1>
+        <p>Solusi Pemindaian Barcode & QR Modern</p>
+    </div>
 
-        <div class="upload-section">
-            <label><strong>Pilih Foto dari Galeri:</strong></label>
+    <div class="card">
+        <h3>Layar Pemindai</h3>
+        <div id="reader"></div>
+        
+        <div class="controls">
+            <label><strong>Scan dari File Foto:</strong></label>
             <input type="file" id="file-input" accept="image/*">
         </div>
     </div>
 
     <div class="card">
-        <h3>Hasil Pemindaian</h3>
+        <h3>Hasil Data Terdeteksi</h3>
         <table>
-            <thead>
-                <tr>
-                    <th>Kategori</th>
-                    <th>Detail Informasi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Format</td>
-                    <td><span id="res-name">-</span></td>
-                </tr>
-                <tr>
-                    <td>Isi Data</td>
-                    <td id="res-info" style="word-break: break-all;">-</td>
-                </tr>
-                <tr>
-                    <td>Alamat Web</td>
-                    <td>
-                        <div id="web-container">
-                            <span id="web-status">Menunggu scan...</span>
-                            <div id="web-actions" style="display: none;">
-                                <a href="#" id="web-link" target="_blank" class="link-active">Buka Website</a><br>
-                                <button class="btn-copy" onclick="copyLink()">Salin Alamat</button>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
+            <tr>
+                <td class="label">Tipe Barcode</td>
+                <td class="val"><span id="res-name">-</span></td>
+            </tr>
+            <tr>
+                <td class="label">Konten Data</td>
+                <td id="res-info" class="val">-</td>
+            </tr>
+            <tr>
+                <td class="label">Alamat Web</td>
+                <td class="val">
+                    <div id="web-section">Menunggu scan...</div>
+                </td>
+            </tr>
         </table>
+
+        <div class="controls" id="action-buttons" style="display: none; margin-top: 20px;">
+            <button class="btn btn-copy" onclick="copyToClipboard()">
+                📋 Salin Semua Data
+            </button>
+            <button class="btn btn-download" onclick="downloadResult()">
+                💾 Download Hasil (.txt)
+            </button>
+        </div>
     </div>
 </div>
 
 <script>
-    // Referensi Elemen UI
     const resName = document.getElementById('res-name');
     const resInfo = document.getElementById('res-info');
-    const webStatus = document.getElementById('web-status');
-    const webActions = document.getElementById('web-actions');
-    const webLink = document.getElementById('web-link');
+    const webSection = document.getElementById('web-section');
+    const actionButtons = document.getElementById('action-buttons');
 
-    // 1. Inisialisasi Kamera (Real-time)
+    // 1. Inisialisasi Scanner Kamera
     const scanner = new Html5QrcodeScanner("reader", { 
-        fps: 15, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
+        fps: 10, 
+        qrbox: { width: 250, height: 250 } 
     });
+    
+    scanner.render(onScanSuccess);
 
-    scanner.render(onScanSuccess, onScanError);
-
-    // Fungsi saat Berhasil Scan
     function onScanSuccess(decodedText, decodedResult) {
-        // Suara/Getar saat sukses
         if (navigator.vibrate) navigator.vibrate(100);
 
-        // Isi Nama/Format Barcode
-        resName.innerText = decodedResult.result.format.formatName;
-        
-        // Isi Informasi Mentah
+        // Tampilkan Tombol Aksi
+        actionButtons.style.display = "flex";
+
+        // Tipe dan Isi
+        const format = decodedResult.result.format.formatName;
+        resName.innerText = format;
         resInfo.innerText = decodedText;
 
-        // Deteksi URL (Optimalisasi Alamat Web)
+        // Logika Link Web / Google Search
         const urlPattern = /(https?:\/\/[^\s]+)/g;
         const foundUrl = decodedText.match(urlPattern);
 
         if (foundUrl) {
-            webStatus.style.display = "none";
-            webActions.style.display = "block";
-            webLink.href = foundUrl[0];
-            webLink.innerText = foundUrl[0];
+            webSection.innerHTML = `<a href="${foundUrl[0]}" target="_blank" class="btn btn-download" style="background:#007bff">Buka Website Resmi</a>`;
         } else {
-            webStatus.style.display = "block";
-            webStatus.innerText = "Tidak mengandung link web";
-            webActions.style.display = "none";
+            const googleUrl = "https://www.google.com/search?q=" + encodeURIComponent(decodedText);
+            webSection.innerHTML = `<a href="${googleUrl}" target="_blank" class="btn btn-google">Cari di Google</a>`;
         }
-    }
-
-    function onScanError(err) {
-        // Diamkan error log agar tidak memenuhi console
     }
 
     // 2. Inisialisasi Scan dari File Foto
     const html5QrCode = new Html5Qrcode("reader");
-    const fileInput = document.getElementById('file-input');
-
-    fileInput.addEventListener('change', e => {
+    document.getElementById('file-input').addEventListener('change', e => {
         if (e.target.files.length == 0) return;
-        
-        const imageFile = e.target.files[0];
-        html5QrCode.scanFile(imageFile, true)
+        html5QrCode.scanFile(e.target.files[0], true)
             .then(decodedText => {
-                // Gunakan logika yang sama dengan kamera
                 onScanSuccess(decodedText, { result: { format: { formatName: "IMAGE_FILE" } } });
             })
-            .catch(err => {
-                alert("Error: Barcode tidak ditemukan di foto.");
-            });
+            .catch(err => alert("Gagal membaca: Barcode tidak jelas atau tidak ada."));
     });
 
-    // Fungsi Salin Link
-    function copyLink() {
-        const linkText = webLink.href;
-        navigator.clipboard.writeText(linkText).then(() => {
-            alert("Alamat web berhasil disalin!");
+    // FUNGSI SALIN DATA
+    function copyToClipboard() {
+        const textToCopy = `Tipe: ${resName.innerText}\nData: ${resInfo.innerText}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert("Data berhasil disalin!");
         });
+    }
+
+    // FUNGSI DOWNLOAD HASIL
+    function downloadResult() {
+        const content = `HASIL SCAN MASTER SCANNER\n==========================\nFormat: ${resName.innerText}\nIsi Data: ${resInfo.innerText}\nTanggal: ${new Date().toLocaleString()}`;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scan-result-${Date.now()}.txt`;
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 </script>
 
